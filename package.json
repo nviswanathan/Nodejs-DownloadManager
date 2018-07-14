@@ -2,7 +2,7 @@
   "name": "downloader",
   "version": "0.0.0",
   "description": "Simple Nodejs downloader",
-  "main": "downloadManager.js",
+  "main": "download.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,8 +10,17 @@
     "Downloader"
   ],
   "author": "Viswanathan N",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "mkdirp": "~0.5.1"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nviswanathan/Nodejs-DownloadManager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nviswanathan/Nodejs-DownloadManager/issues"
+  },
+  "homepage": "https://github.com/nviswanathan/Nodejs-DownloadManager"
 }
