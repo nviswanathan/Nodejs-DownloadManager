@@ -113,7 +113,7 @@ function download(url, dest_path, number_of_split){
         });
         var isCompleted = unCompleted.length <= 0;
         if(isCompleted){
-            emitter.emit("end", {});
+            emitter.emit("end", {fileName: file_name, filePath: file_path});
             _fs.close(fd);
             abort(isCompleted);
         }
