@@ -16,7 +16,7 @@ function download(url, dest_path, number_of_split){
         emitter = new events.EventEmitter(), 
         downloads = [],
         number_of_parts = number_of_split || 4, 
-        min_part_size = 1024 ;
+        min_part_size = 1024 * 1024; //Min 1 MB per part
         file_size = null;
         fd = null;
 
