@@ -1,7 +1,7 @@
 {
-  "name": "downloader",
+  "name": "DownloadManager",
   "version": "0.0.0",
-  "description": "Simple Nodejs downloader",
+  "description": "Simple Nodejs download manager",
   "main": "download.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
