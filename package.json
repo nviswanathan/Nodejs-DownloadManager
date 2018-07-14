@@ -1,0 +1,17 @@
+{
+  "name": "downloader",
+  "version": "0.0.0",
+  "description": "Simple Nodejs downloader",
+  "main": "downloadManager.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Downloader"
+  ],
+  "author": "Viswanathan N",
+  "license": "ISC",
+  "dependencies": {
+    "mkdirp": "~0.5.1"
+  }
+}
