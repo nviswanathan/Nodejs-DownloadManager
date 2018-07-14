@@ -1,4 +1,3 @@
-
 var _http = require("http");
 var _https = require("https");
 var _url = require("url");
@@ -48,7 +47,7 @@ function download(url, dest_path, number_of_split){
     }
 
     function start(){
-        if(!_path.exists(dest_path)){
+        if(!_fs.existsSync(dest_path)){
             _mkdirp.sync(dest_path);
         }
         fd = _fs.openSync(file_path, "w");  
@@ -187,10 +186,11 @@ function download(url, dest_path, number_of_split){
 }
 
 module.exports.Download = download;
-/*
-var url = "https://quad42media.s3.amazonaws.com:443/quad42_media/12/2/108323_1600_1200.jpg?Signature=HUXLp7gzkZMXgMQyrjR%2FU%2FbChR4%3D&Expires=1531554303&AWSAccessKeyId=AKIAJERVIHAFBYJADXGQ&x-amz-meta-media_properties=%7B%22format%22%3A%20%22JPEG%22%2C%20%22resolution%22%3A%20%7B%22height%22%3A%201200%2C%20%22width%22%3A%201600%7D%7D&x-amz-meta-size=981967&x-amz-meta-content_type=image/jpeg&x-amz-meta-last_modified=2018-03-03%2015%3A27%3A21.459820&x-amz-meta-tags=%5B%5D";
 
-dwd = download(url, "/tmp/to")
+/*
+var url = "https://quad42media.s3.amazonaws.com:443/quad42_media/12/2/108323_1600_1200.jpg?Signature=XhAgwitoItC%2B8F1AONqp1ZYs5GA%3D&Expires=1531563034&AWSAccessKeyId=AKIAJERVIHAFBYJADXGQ&x-amz-meta-media_properties=%7B%22format%22%3A%20%22JPEG%22%2C%20%22resolution%22%3A%20%7B%22height%22%3A%201200%2C%20%22width%22%3A%201600%7D%7D&x-amz-meta-tags=%5B%5D&x-amz-meta-content_type=image/jpeg&x-amz-meta-size=981967&x-amz-meta-last_modified=2018-03-03%2015%3A27%3A21.459820";
+
+dwd = download(url, "./download")
 dwd.on("start", function(data){
     console.log("Start", data)
 })
