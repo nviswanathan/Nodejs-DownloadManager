@@ -6,18 +6,18 @@ var _path = require('path');
 var _mkdirp = require('mkdirp');
 var events = require("events");
 
-function download(url, dest_path, number_of_split){
+function download(url, dest_path, file_name, number_of_split){
     var syncCompleted = false;
     var url_data = _url.parse(url),
         _isSSL = url_data.port == "443" || url_data.protocol == "https:",
         http = _isSSL ? _https : http,
-        file_name = _path.basename(url_data.pathname),
-        file_path = _path.join(dest_path, file_name)
+        file_name = file_name || _path.basename(url_data.pathname),
+        file_path = _path.join(dest_path, file_name),
         emitter = new events.EventEmitter(), 
         downloads = [],
         number_of_parts = number_of_split || 4, 
-        min_part_size = 1024 * 1024; //Min 1 MB per part
-        file_size = null;
+        min_part_size = 1024 * 1024, //Min 1 MB per part
+        file_size = null,
         fd = null;
 
     if(dest_path == null){
@@ -63,7 +63,7 @@ function download(url, dest_path, number_of_split){
                     end = 0;
                 // var no_parts = 1;
                 // var part_size = file_size, end = 0;
-                var message = {file_name: file_name, file_size: file_size, no_parts: no_parts};
+                var message = {file_name: file_name, file_size: file_size, no_parts: no_parts, fdW: fd};
                 writeOutPut(message);
                 for(var index=0; index < no_parts; index++){
                     var next_start = end+part_size;
@@ -85,12 +85,14 @@ function download(url, dest_path, number_of_split){
         var options = getOptions();
         // options.headers = { "Range": "bytes=0-1" }
         var req = http.get(options, function(res) {
+            emitter.emit('response', res);
             callback(res.headers);
             req.abort();
         }).on("error", function(err){ 
             callback(null, err);
             emitter.emit('error', err);
         });
+        emitter.emit('request', req);
         //while(sync==true){ _sleep(100); }
         return headers;
     }
@@ -106,16 +108,22 @@ function download(url, dest_path, number_of_split){
         })
     }
 
-
-    function checkCompleted(){
+    function isRunning(){
         var unCompleted = downloads.filter(function(data){
             return !data.msg.isCompleted;
         });
-        var isCompleted = unCompleted.length <= 0;
-        if(isCompleted){
-            emitter.emit("end", {fileName: file_name, filePath: file_path});
-            _fs.close(fd);
-            abort(isCompleted);
+        return unCompleted.length > 0;
+    }
+
+
+    function checkCompleted(options){;
+        if(!isRunning()){
+            var status = _fs.statSync(file_path);
+            _fs.truncate(fd, file_size,function(){
+                _fs.closeSync(fd);
+                emitter.emit("end", {fileName: file_name, filePath: file_path});
+                abort(true);
+            })
         }
         //_sleep(100);
     }    
@@ -141,11 +149,13 @@ function download(url, dest_path, number_of_split){
             res.on("end", function(){        
                 console.log("Completed", new Date().getTime() - startTime.getTime());
                 msg.isCompleted = true;
-                checkCompleted();
+                checkCompleted(options);
             })
             
         }).on("error", function(err){ 
             console.log("error", err)
+            msg.error = err.message;
+            msg.invalid = true;
         }).on("end", function(){
             console.log("Completed", new Date().getTime() - startTime.getTime());
             msg.isCompleted = true;
@@ -160,12 +170,20 @@ function download(url, dest_path, number_of_split){
 
     }
 
+    function resume(){
+
+    }
+
+    function retry(){
+
+    }
+
     function abort(isCompleted){
         downloads.forEach(function(data){
             data.req.abort();
         });
         if(!isCompleted){
-            _fs.unlink(file_path)
+            _fs.unlinkSync(file_path)
         }
         emitter =  downloads = fd =  url_data = null;
     }
@@ -176,8 +194,27 @@ function download(url, dest_path, number_of_split){
         },
 
         cancel: function(){
-            abort();
+            let em = emitter;
+            try{
+                abort();
+                em.emit("cancel", {fileName: file_name});
+            } catch(ex){
+                console.log("Exception:",ex);    
+                em.emit("cancel-error", {});            
+            }
         }, 
+
+        resume: function(){
+            resume();
+        },
+
+        retry: function(){
+            retry();
+        },
+
+        isRunning: function(){
+            return isRunning();
+        },
 
         start: function() {
             start();
