@@ -156,6 +156,9 @@ function download(url, dest_path, file_name, number_of_split){
                         console.log("Error on writing the file on download:" + ex.message);
                         throw ex;
                     }
+                }else {
+                    console.log("Download Stoped:" + file_name);
+                    res.req.abort();
                 }
             });
             res.on("end", function(){        
