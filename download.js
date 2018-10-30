@@ -18,7 +18,8 @@ function download(url, dest_path, file_name, number_of_split){
         number_of_parts = number_of_split || 4, 
         min_part_size = 1024 * 1024, //Min 1 MB per part
         file_size = null,
-        fd = null;
+        fd = null,
+        stop_download = false;
 
     if(dest_path == null){
         throw new Error("Invalid Path Configuration")
@@ -53,7 +54,7 @@ function download(url, dest_path, file_name, number_of_split){
         fd = _fs.openSync(file_path, "w");  
         getFileDetails(function(headers, err){
             if(err) throw err
-            else {
+            else if(!stop_download){
                 emitter.emit('start', headers);
                 file_size = parseInt(headers["content-length"]);
                 // console.log("file_size", file_size);
@@ -117,13 +118,17 @@ function download(url, dest_path, file_name, number_of_split){
 
 
     function checkCompleted(options){;
-        if(!isRunning()){
-            var status = _fs.statSync(file_path);
-            _fs.truncate(fd, file_size,function(){
-                _fs.closeSync(fd);
-                emitter.emit("end", {fileName: file_name, filePath: file_path});
-                abort(true);
-            })
+        if(!isRunning() && !stop_download){
+            try{
+                var status = _fs.statSync(file_path);
+                _fs.truncate(fd, file_size,function(){
+                    _fs.closeSync(fd);
+                    emitter.emit("end", {fileName: file_name, filePath: file_path});
+                    abort(true);
+                });
+            } catch(ex){
+                console.log("Error on download complete:"+ ex.message);
+            }
         }
         //_sleep(100);
     }    
@@ -139,12 +144,19 @@ function download(url, dest_path, file_name, number_of_split){
             // console.log("Headers", res.headers, start, end)
             console.log("Start Download", offset);
             res.on('data', function (chunk) {
-                // _fs.writeSync(fd, chunk, start);
-                _fs.writeSync(fd, chunk, 0, chunk.length, start);
-                // console.log("writed Sync:", chunk.toString());
-                start += chunk.length;
-                msg.completed = start;
-                updateProgress();
+                if(!stop_download){
+                    try{
+                    // _fs.writeSync(fd, chunk, start);
+                    _fs.writeSync(fd, chunk, 0, chunk.length, start);
+                    // console.log("writed Sync:", chunk.toString());
+                    start += chunk.length;
+                    msg.completed = start;
+                    updateProgress();
+                    } catch(ex) {
+                        console.log("Error on writing the file on download:" + ex.message);
+                        throw ex;
+                    }
+                }
             });
             res.on("end", function(){        
                 console.log("Completed", new Date().getTime() - startTime.getTime());
@@ -179,6 +191,7 @@ function download(url, dest_path, file_name, number_of_split){
     }
 
     function abort(isCompleted){
+        stop_download = true;
         downloads.forEach(function(data){
             data.req.abort();
         });
@@ -217,7 +230,9 @@ function download(url, dest_path, file_name, number_of_split){
         },
 
         start: function() {
-            start();
+            setTimeout(()=>{
+                start();
+            }, 10)
         }
     }
 }
