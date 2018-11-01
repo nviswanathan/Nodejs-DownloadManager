@@ -56,7 +56,7 @@ function download(url, dest_path, file_name, number_of_split){
             if(err) { 
                 emitter.emit('error', err);  //throw err
                 console.log("Error on download file infor" , error);
-                _fd.closeSync(fd);
+                _fs.closeSync(fd);
             }
             else if(!stop_download){
                 emitter.emit('start', headers);
@@ -156,6 +156,9 @@ function download(url, dest_path, file_name, number_of_split){
                     start += chunk.length;
                     msg.completed = start;
                     updateProgress();
+                    if(msg.complete == end){
+                        req.abort();
+                    }
                     } catch(ex) {
                         console.log("Error on writing the file on download:" + ex.message);
                         throw ex;
@@ -194,13 +197,17 @@ function download(url, dest_path, file_name, number_of_split){
     }
 
     function retry(){
-
+        start();
     }
 
     function abort(isCompleted){
         stop_download = true;
         downloads.forEach(function(data){
-            data.req.abort();
+            try{
+                data.req.abort();
+            } catch(ex){
+                console.log("Error on download abort: ", ex);
+            }
         });
         if(!isCompleted){
             _fs.unlinkSync(file_path)
