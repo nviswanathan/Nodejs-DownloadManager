@@ -53,7 +53,11 @@ function download(url, dest_path, file_name, number_of_split){
         }
         fd = _fs.openSync(file_path, "w");  
         getFileDetails(function(headers, err){
-            if(err) emitter.emit('error', err) //throw err
+            if(err) { 
+                emitter.emit('error', err);  //throw err
+                console.log("Error on download file infor" , error);
+                _fd.closeSync(fd);
+            }
             else if(!stop_download){
                 emitter.emit('start', headers);
                 file_size = parseInt(headers["content-length"]);
