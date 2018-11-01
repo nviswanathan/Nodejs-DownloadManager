@@ -114,10 +114,13 @@ function download(url, dest_path, file_name, number_of_split){
     }
 
     function isRunning(){
-        var unCompleted = downloads.filter(function(data){
-            return !data.msg.isCompleted;
-        });
-        return unCompleted.length > 0;
+        if(downloads != null){
+            var unCompleted =  downloads.filter(function(data){
+                return !data.msg.isCompleted;
+            });
+            return unCompleted.length > 0;
+        }
+        return false;
     }
 
 
