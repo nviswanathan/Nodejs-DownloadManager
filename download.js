@@ -10,7 +10,7 @@ function download(url, dest_path, file_name, number_of_split){
     var syncCompleted = false;
     var url_data = _url.parse(url),
         _isSSL = url_data.port == "443" || url_data.protocol == "https:",
-        http = _isSSL ? _https : http,
+        http = _isSSL ? _https : _http,
         file_name = file_name || _path.basename(url_data.pathname),
         file_path = _path.join(dest_path, file_name),
         emitter = new events.EventEmitter(), 
@@ -55,10 +55,10 @@ function download(url, dest_path, file_name, number_of_split){
         getFileDetails(function(headers, err){
             if(err) { 
                 emitter.emit('error', err);  //throw err
-                console.log("Error on download file infor" , error);
+                console.log("Error on download file infor" , err);
                 _fs.closeSync(fd);
             }
-            else if(!stop_download){
+            else {
                 emitter.emit('start', headers);
                 file_size = parseInt(headers["content-length"]);
                 // console.log("file_size", file_size);
@@ -126,15 +126,15 @@ function download(url, dest_path, file_name, number_of_split){
 
     function checkCompleted(options){;
         if(!isRunning() && !stop_download){
-            try{
+            try {
                 var status = _fs.statSync(file_path);
                 _fs.truncate(fd, file_size,function(){
                     _fs.closeSync(fd);
                     emitter.emit("end", {fileName: file_name, filePath: file_path});
                     abort(true);
-                });
+                })
             } catch(ex){
-                console.log("Error on download complete:"+ ex.message);
+                console.log("Error on file complete check:", ex.message);
             }
         }
         //_sleep(100);
@@ -153,21 +153,22 @@ function download(url, dest_path, file_name, number_of_split){
             res.on('data', function (chunk) {
                 if(!stop_download){
                     try{
-                    // _fs.writeSync(fd, chunk, start);
-                    _fs.writeSync(fd, chunk, 0, chunk.length, start);
-                    // console.log("writed Sync:", chunk.toString());
-                    start += chunk.length;
-                    msg.completed = start;
-                    updateProgress();
-                    if(msg.complete == end){
-                        req.abort();
-                    }
+                        // _fs.writeSync(fd, chunk, start);
+                        _fs.writeSync(fd, chunk, 0, chunk.length, start);
+                        // console.log("writed Sync:", chunk.toString());
+                        start += chunk.length;
+                        msg.completed = start;
+                        updateProgress();
+                        if(msg.complete == end){
+                            req.abort();
+                        }
                     } catch(ex) {
-                        console.log("Error on writing the file on download:" + ex.message);
+                        console.log("Execption on download file wirtting:" + ex.message);
                         throw ex;
                     }
-                }else {
-                    console.log("Download Stoped:" + file_name);
+                }
+                else {
+                    console.log("Stopped Download Process:" + file_name);
                     res.req.abort();
                 }
             });
@@ -206,11 +207,7 @@ function download(url, dest_path, file_name, number_of_split){
     function abort(isCompleted){
         stop_download = true;
         downloads.forEach(function(data){
-            try{
-                data.req.abort();
-            } catch(ex){
-                console.log("Error on download abort: ", ex);
-            }
+            data.req.abort();
         });
         if(!isCompleted){
             _fs.unlinkSync(file_path)
